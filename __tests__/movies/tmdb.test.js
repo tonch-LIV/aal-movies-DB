@@ -72,7 +72,7 @@ describe('searchMovies', () => {
     await expect(searchMovies('no matching movie')).resolves.toEqual([]);
   });
 
-  test.each([undefined, null, '', '   ', '\t\n']) (
+  test.each([undefined, null, '', '   ', '\t\n', 42, true, [], {}, ['movie']])(
     'rejects an empty query (%p) without requesting TMDB',
     async (query) => {
       await expect(searchMovies(query)).rejects.toThrow('Search query is required');
@@ -106,13 +106,21 @@ describe('getMovieDetails', () => {
     });
   });
 
-  test.each([undefined, null, '']) (
+  test.each([undefined, null, '', '550', 0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, true, [], {}])(
     'rejects a missing movie ID (%p) without requesting TMDB',
     async (tmdbId) => {
       await expect(getMovieDetails(tmdbId)).rejects.toThrow('TMDB movie ID is required');
       expect(axios.get).not.toHaveBeenCalled();
     },
   );
+});
+
+test.each(['search', 'details'])('%s normalizes an empty release date to null', async (operation) => {
+  const movie = { ...providerMovie, release_date: '' };
+  axios.get.mockResolvedValue({ data: operation === 'search' ? { results: [movie] } : movie });
+  const expected = { ...normalizedMovie, releaseDate: null };
+  await expect(operation === 'search' ? searchMovies('movie') : getMovieDetails(550))
+    .resolves.toEqual(operation === 'search' ? [expected] : expected);
 });
 
 describe.each([
