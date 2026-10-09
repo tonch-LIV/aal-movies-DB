@@ -13,12 +13,12 @@ const normalizeMovie = (movie) => ({
   tmdbId: movie.id,
   title: movie.title,
   overview: movie.overview,
-  releaseDate: movie.release_date,
+  releaseDate: movie.release_date === '' ? null : movie.release_date,
   posterPath: movie.poster_path,
-}); 
+});
 
 const searchMovies = async (query) => {
-  if (!query || !query.trim()) {
+  if (typeof query !== 'string' || !query.trim()) {
     throw new Error('Search query is required');
   }
 
@@ -34,7 +34,7 @@ const searchMovies = async (query) => {
 };
 
 const getMovieDetails = async (tmdbId) => {
-  if (!tmdbId) {
+  if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
     throw new Error('TMDB movie ID is required');
   }
 
