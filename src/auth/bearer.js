@@ -7,21 +7,38 @@ async function bearer(req, res, next) {
   try {
     const authorization = req.headers.authorization;
 
-    if (!authorization || !authorization.startsWith('Bearer ')) {
+    const headerParts = authorization?.split(' ');
+
+    if (
+      headerParts?.length !== 2 ||
+      headerParts[0] !== 'Bearer' ||
+      !headerParts[1]
+    ) {
       return res.status(401).json({
         error: 'Invalid token',
       });
     }
 
-    const token = authorization.split(' ')[1];
+    const token = headerParts[1];
 
-    if (!token) {
+    const decoded = jwt.verify(token, process.env.SECRET, {
+      algorithms: ['HS256'],
+    });
+
+    if (
+      !decoded ||
+      typeof decoded !== 'object' ||
+      !Number.isSafeInteger(decoded.id) ||
+      decoded.id <= 0 ||
+      !Number.isInteger(decoded.iat) ||
+      !Number.isInteger(decoded.exp) ||
+      decoded.exp <= decoded.iat ||
+      decoded.exp - decoded.iat > 900
+    ) {
       return res.status(401).json({
         error: 'Invalid token',
       });
     }
-
-    const decoded = jwt.verify(token, process.env.SECRET);
 
     const user = await users.findByPk(decoded.id);
 
