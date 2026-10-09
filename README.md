@@ -3,8 +3,10 @@
 - Setup: Node `20.20.2`, `npm ci`, private `.env`, separate PostgreSQL database, `npm run dev`.
 - Commands: `npm test` and `npm start`.
 - Contract: link to [`docs/team-contract.md`](docs/team-contract.md).
-- Status: four foundation tests pass; local PostgreSQL startup and HTTP health response verified on port 3001. model registration, feature routes, authorization pending; deployment optional.
-
+- Status: 222 tests pass across 12 suites. Shared models, auth/movie router
+  mounting, and Favorites endpoints are integrated. Auth corrections,
+  soft account deletion, final PostgreSQL demonstration, and presentation
+  documentation remain pending; deployment optional.
 ## UML
 
 ## Model Diagram
@@ -75,12 +77,15 @@ The diagram describes the planned complete system, including features still pend
 - installed ` express`, `axios`, `dotenv`, `cors`, `jest`, `supertest`, `sequelize`,`pg` through `npm`.
 - `git init` to tie to github repo.
 - created simple express server; **`server.js`**.
+  - transferred to `src/server.js`
 - defined **`.env.example`**.
 - created **`/docs/team-contract.md`** as a reminder of project scope and team responsibility shared reference.
   - updated policy regarding user account deletion.
 - installed ` bcrypt@6.0.0` (password hashing), `jsonwebtoken@9.0.2` (token signing/verification), -dev `sqlite3@5.1.7` (test database).
 - updated `"scripts"` to include `"start"` and `"dev"`, as well as add `"engines"` cmds; **`package.json`**.
-- Established Express health endpoint and separated startup; `src/server.js`
+- **`src/server.js`**;
+  - Established Express health endpoint and separated startup,
+  - mounted shared auth, movies, and Favorites routers,
   - `index.js`; startup entry.
 - **`src/error-handlers`**;
   - created `404.js`, resource not found.
@@ -100,14 +105,16 @@ The diagram describes the planned complete system, including features still pend
 - Verified PostgreSQL startup and HTTP health response; `index.js`, `GET /health`.
 - **`src/favorites/favorite-model.js`**;
   - added Favorites model and duplicate constraints factory.
-- registered shared models and enforced relationships and movie deletion cascade;b
-  - **`src/models/index.js`**, 
+- **`src/models/index.js`**;
+  - registered shared models and enforced relationships and movie deletion cascade, 
 - **`index.js`**
   - initialized missing DB tables during startup, before listening; `await db.sync();`.
 - **`__tests__/auth/user-model.test.js`**
-  - updated to import `{ db`, `users: User }` from `../../src/models.js`
-- `__tests__/integration/models.test.js`;
+  - updated to import `{ db`, `users: User }` from `../../src/models`
+- **`__tests__/integration/models.test.js`**;
   - Verified shared model constraints and movie-to-favorites cascade.
+- Added authenticated Favorites listing, creation, and owner/admin removal; **`src/favorites/router.js`**, **`src/favorites/handlers.js`**.
+- Verified Favorites isolation, ownership, and movie deletion cascade with real authentication; `__tests__/favorites/routes.test.js`.
 
 ### amity - movies
 

@@ -22,7 +22,7 @@ Users can remove their own favorites; admins can remove any favorite.
 Favoriting an entry does not grant editing/deleting rights or create another movie entry.
 
 Models:
-Users: id, username(unique), password(hash), role(user/admin).
+Users: id, username(unique), password(hash), role(user/admin), deletedAt.
 Movies: id, ownerId, tmdbId, title, overview, releaseDate, posterPath,
         status(planned/watched, default planned), notes.
 Favorites: id, userId, movieId.
@@ -109,6 +109,7 @@ Admin setup is explicit and never hardcodes committed credentials.
 Routes:
 POST /signup — JSON username/password; 201.
 POST /signin — Basic header; 200.
+DELETE /users/:id — Bearer + explicit admin-only check; soft delete account and remove its favorites transactionally; 204.
 Auth body: { user: { id, username, role }, token }.
 GET /health — public; 200 { status: "ok" }.
 
