@@ -77,6 +77,7 @@ The diagram describes the planned complete system, including features still pend
 - created simple express server; **`server.js`**.
 - defined **`.env.example`**.
 - created **`/docs/team-contract.md`** as a reminder of project scope and team responsibility shared reference.
+  - updated policy regarding user account deletion.
 - installed ` bcrypt@6.0.0` (password hashing), `jsonwebtoken@9.0.2` (token signing/verification), -dev `sqlite3@5.1.7` (test database).
 - updated `"scripts"` to include `"start"` and `"dev"`, as well as add `"engines"` cmds; **`package.json`**.
 - Established Express health endpoint and separated startup; `src/server.js`
@@ -97,6 +98,16 @@ The diagram describes the planned complete system, including features still pend
   - installs from lockfile and runs same test cmd; w/o PostgreSQL nor TMDB creds.
 - Verified health, error responses, and SQLite connectivity; `__tests__/integration/foundation.test.js` — 4 tests passed.
 - Verified PostgreSQL startup and HTTP health response; `index.js`, `GET /health`.
+- **`src/favorites/favorite-model.js`**;
+  - added Favorites model and duplicate constraints factory.
+- registered shared models and enforced relationships and movie deletion cascade;b
+  - **`src/models/index.js`**, 
+- **`index.js`**
+  - initialized missing DB tables during startup, before listening; `await db.sync();`.
+- **`__tests__/auth/user-model.test.js`**
+  - updated to import `{ db`, `users: User }` from `../../src/models.js`
+- `__tests__/integration/models.test.js`;
+  - Verified shared model constraints and movie-to-favorites cascade.
 
 ### amity - movies
 

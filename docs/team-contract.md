@@ -48,8 +48,18 @@ The integration/favorites owner registers all supplied model factories and defin
 ownerId, userId, and movieId are required foreign keys.
 They must reference existing local records.
 Deleting a movie cascades deletion to its associated Favorites.
-Proposed user-deletion policy: RESTRICT while related records exist;
-requires team agreement. No account-deletion endpoint is in scope.
+
+Account deletion:
+Only admins may delete accounts through DELETE /users/:id.
+Deletion is soft deletion: the Users row remains with deletedAt set.
+Deleted users cannot sign in or authenticate with existing tokens.
+Their movie submissions remain, retaining ownerId and displaying the
+former username through an explicitly limited public-user projection.
+Favorites belonging to the deleted user are removed transactionally.
+Other users' favorites on those movies remain.
+Only admins may modify movies whose owner account is deleted.
+Deleted usernames remain reserved.
+Successful deletion returns 204 without a body.
 
 Shared exports:
 src/models/index.js exports { db, users, movies, favorites }.
