@@ -25,13 +25,21 @@ function safeUser(user) {
 
 router.post('/signup', async (req, res, next) => {
   try {
-    const { username, password } = req.body;
+  const { username, password } =
+    req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+      ? req.body
+      : {};
 
-    if (!username || !password) {
-      return res.status(400).json({
-        error: 'Username and password are required',
-      });
-    }
+  if (
+    typeof username !== 'string' ||
+    typeof password !== 'string' ||
+    username.trim().length === 0 ||
+    password.trim().length === 0
+  ) {
+    return res.status(400).json({
+      error: 'Valid username and password are required',
+    });
+  }
 
     const user = await users.create({
       username,
