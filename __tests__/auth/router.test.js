@@ -82,11 +82,50 @@ describe('Auth Router', () => {
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
-      error: 'Username and password are required',
+      error: 'Valid username and password are required',
     });
 
     expect(users.create).not.toHaveBeenCalled();
   });
+
+  test('POST /signup rejects an absent request body', async () => {
+    const response = await request(app)
+      .post('/signup');
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      error: 'Valid username and password are required',
+    });
+
+    expect(users.create).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['blank username', '   ', 'password123'],
+    ['blank password', 'testuser', '   '],
+    ['empty username', '', 'password123'],
+    ['empty password', 'testuser', ''],
+    ['numeric username', 123, 'password123'],
+    ['numeric password', 'testuser', 123],
+    ['object username', { value: 'testuser' }, 'password123'],
+    ['object password', 'testuser', { value: 'password123' }],
+    ['null username', null, 'password123'],
+    ['null password', 'testuser', null],
+  ])(
+    'POST /signup rejects %s',
+    async (description, username, password) => {
+      const response = await request(app)
+        .post('/signup')
+        .send({ username, password });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        error: 'Valid username and password are required',
+      });
+
+      expect(users.create).not.toHaveBeenCalled();
+    }
+  );
 
   test('POST /signup rejects a duplicate username', async () => {
     const error = new Error('duplicate username');
@@ -148,6 +187,53 @@ describe('Auth Router', () => {
 
     expect(decoded.id).toBe(1);
     expect(decoded.exp - decoded.iat).toBe(900);
+  });
+
+  test('POST /signin accepts a password containing a colon', async () => {
+    const hashedPassword = await bcrypt.hash('pass:word', 10);
+
+    users.findOne.mockResolvedValue({
+      id: 2,
+      username: 'testuser',
+      password: hashedPassword,
+      role: 'user',
+    });
+
+    const credentials = Buffer
+      .from('testuser:pass:word')
+      .toString('base64');
+
+    const response = await request(app)
+      .post('/signin')
+      .set('Authorization', `Basic ${credentials}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.user.username).toBe('testuser');
+    expect(response.body.token).toBeDefined();
+  });
+
+  test.each([
+    ['missing header', undefined],
+    ['wrong scheme', 'Bearer abc123'],
+    ['missing credentials', 'Basic'],
+    ['extra header part', 'Basic abc123 extra'],
+    ['invalid Base64', 'Basic !!!'],
+    ['missing password separator', 'Basic dGVzdHVzZXI='],
+  ])('POST /signin rejects %s', async (description, authorization) => {
+    const testRequest = request(app).post('/signin');
+
+    if (authorization !== undefined) {
+      testRequest.set('Authorization', authorization);
+    }
+
+    const response = await testRequest;
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({
+      error: 'Invalid login',
+    });
+
+    expect(users.findOne).not.toHaveBeenCalled();
   });
 
 });
