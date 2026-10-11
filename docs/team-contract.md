@@ -60,6 +60,7 @@ Other users' favorites on those movies remain.
 Only admins may modify movies whose owner account is deleted.
 Deleted usernames remain reserved.
 Successful deletion returns 204 without a body.
+Public stored-movie GET responses include owner: { id, username }, including the former owner after soft deletion.
 
 Shared exports:
 src/models/index.js exports { db, users, movies, favorites }.

@@ -64,7 +64,15 @@ test.each([undefined, '2'])('lists stored entries with optional owner filter %p'
   req.query.ownerId = ownerId;
   movies.findAll.mockResolvedValue([movie]);
   await handlers.getAll(req, res, next);
-  expect(movies.findAll).toHaveBeenCalledWith({ where: ownerId ? { ownerId: 2 } : {} });
+  expect(movies.findAll).toHaveBeenCalledWith({
+    where: ownerId ? { ownerId: 2 } : {},
+    include: [{
+      association: 'owner',
+      attributes: ['id', 'username'],
+      paranoid: false,
+      required: false,
+    }],
+  });
   expect(res.status).toHaveBeenCalledWith(200);
   expect(res.json).toHaveBeenCalledWith([movie]);
   expect(tmdb.getMovieDetails).not.toHaveBeenCalled();
@@ -83,7 +91,14 @@ describe.each(['getOne', 'update', 'remove', 'getAll'])('%s ID validation', (nam
 test('getOne returns a public stored entry without TMDB', async () => {
   delete req.user;
   await handlers.getOne(req, res, next);
-  expect(movies.findByPk).toHaveBeenCalledWith(1);
+  expect(movies.findByPk).toHaveBeenCalledWith(1, {
+    include: [{
+      association: 'owner',
+      attributes: ['id', 'username'],
+      paranoid: false,
+      required: false,
+    }],
+  });
   expect(res.status).toHaveBeenCalledWith(200);
   expect(res.json).toHaveBeenCalledWith(movie);
   expect(tmdb.getMovieDetails).not.toHaveBeenCalled();

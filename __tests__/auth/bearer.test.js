@@ -245,4 +245,22 @@ describe('Bearer Auth Middleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
+  test('forwards database failures instead of returning 401', async () => {
+    const error = new Error('Database unavailable');
+    users.findByPk.mockRejectedValueOnce(error);
+
+    const token = jwt.sign(
+      { id: 1 },
+      process.env.SECRET,
+      { expiresIn: '15m' }
+    );
+
+    req.headers.authorization = `Bearer ${token}`;
+
+    await bearer(req, res, next);
+
+    expect(next).toHaveBeenCalledWith(error);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
 });

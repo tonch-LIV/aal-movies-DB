@@ -3,6 +3,13 @@
 const { movies } = require('../models');
 const { searchMovies, getMovieDetails } = require('../services/tmdb');
 
+const publicOwnerInclude = [{
+  association: 'owner',
+  attributes: ['id', 'username'],
+  paranoid: false,
+  required: false,
+}];
+
 // Route/query IDs arrive as strings; JSON body IDs must be numbers.
 const parseId = (value) => {
   if (typeof value === 'string' && !/^[1-9]\d*$/.test(value)) return null;
@@ -71,7 +78,10 @@ const getAll = async (req, res, next) => {
       }
     }
 
-    const results = await movies.findAll({ where });
+    const results = await movies.findAll({
+      where,
+      include: publicOwnerInclude,
+    });
     res.status(200).json(results);
   } catch (error) {
     next(error);
@@ -82,7 +92,9 @@ const getOne = async (req, res, next) => {
   const id = parseId(req.params.id);
   if (id === null) return res.status(400).json({ error: 'Valid movie ID is required' });
   try {
-    const movie = await movies.findByPk(id);
+    const movie = await movies.findByPk(id, {
+      include: publicOwnerInclude,
+    });
 
     if (!movie) {
       return res.status(404).json({ error: 'Movie not found' });

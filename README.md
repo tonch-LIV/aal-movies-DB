@@ -1,12 +1,14 @@
 # aal-movies-DB
 
 - Setup: Node `20.20.2`, `npm ci`, private `.env`, separate PostgreSQL database, `npm run dev`.
+- Existing PostgreSQL databases: apply `scripts/add-user-deleted-at.sql` before starting the updated app.
 - Commands: `npm test` and `npm start`.
 - Contract: link to [`docs/team-contract.md`](docs/team-contract.md).
-- Status: 222 tests pass across 12 suites. Shared models, auth/movie router
-  mounting, and Favorites endpoints are integrated. Auth corrections,
-  soft account deletion, final PostgreSQL demonstration, and presentation
-  documentation remain pending; deployment optional.
+- Status: 261 tests pass across 13 suites. Auth, movies, Favorites, and
+  transactional admin-only soft account deletion are integrated.
+  Final PostgreSQL deletion rehearsal, presentation documentation,
+  and release remain pending; cloud deployment optional.
+
 ## UML
 
 ## Model Diagram
@@ -18,6 +20,7 @@ classDiagram
         username
         password
         role
+        deletedAt
     }
     class Movies {
         id
@@ -114,7 +117,18 @@ The diagram describes the planned complete system, including features still pend
 - **`__tests__/integration/models.test.js`**;
   - Verified shared model constraints and movie-to-favorites cascade.
 - Added authenticated Favorites listing, creation, and owner/admin removal; **`src/favorites/router.js`**, **`src/favorites/handlers.js`**.
-- Verified Favorites isolation, ownership, and movie deletion cascade with real authentication; `__tests__/favorites/routes.test.js`.
+- Verified Favorites isolation, ownership, and movie deletion cascade with real authentication; **`__tests__/favorites/routes.test.js`**.
+- Added transactional admin-only account deletion and authentication exclusion;
+  - **`src/auth/router.js`**, **`src/auth/user-model.js`**;
+- cleaned signup; 
+- **`src/auth/bearer.js`**;
+  - Forwarded unexpected Bearer failures to the server error handler
+- **`src/movies/handlers.js`**;
+  - Preserved limited former-owner display on public movie reads; `publicOwnerInclude`.
+- **`scripts/add-user-deleted-at.sql`**;
+  - Added the existing-database soft-delete column update; 
+- Verified account deletion, retained records, and rollback behavior; 
+  - **`__tests__/integration/account-deletion.test.js`**;
 
 ### amity - movies
 
