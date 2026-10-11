@@ -1,0 +1,117 @@
+'use strict';
+
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const { db, users, favorites } = require('../models');
+const basic = require('./basic.js');
+const bearer = require('./bearer.js');
+
+const router = express.Router();
+
+function createToken(user) {
+  return jwt.sign(
+    { id: user.id },
+    process.env.SECRET,
+    { expiresIn: '15m' }
+  );
+}
+
+function safeUser(user) {
+  return {
+    id: user.id,
+    username: user.username,
+    role: user.role,
+  };
+}
+
+router.post('/signup', async (req, res, next) => {
+  try {
+    const { username, password } =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+        ? req.body
+        : {};
+
+    if (
+      typeof username !== 'string' ||
+      typeof password !== 'string' ||
+      username.trim().length === 0 ||
+      password.trim().length === 0
+    ) {
+      return res.status(400).json({
+        error: 'Valid username and password are required',
+      });
+    }
+
+    const user = await users.create({
+      username,
+      password,
+      role: 'user',
+    });
+
+    const token = createToken(user);
+
+    return res.status(201).json({
+      user: safeUser(user),
+      token,
+    });
+  } catch (error) {
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({
+        error: 'Username already exists',
+      });
+    }
+
+    return next(error);
+  }
+});
+
+router.post('/signin', basic, (req, res) => {
+  const token = createToken(req.user);
+
+  return res.status(200).json({
+    user: safeUser(req.user),
+    token,
+  });
+});
+
+router.delete('/users/:id', bearer, async (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+
+  const rawId = req.params.id;
+  const id = Number(rawId);
+
+  if (!/^[1-9]\d*$/.test(rawId) || !Number.isSafeInteger(id)) {
+    return res.status(400).json({ error: 'Valid user ID is required' });
+  }
+
+  try {
+    const deleted = await db.transaction(async (transaction) => {
+      const user = await users.findByPk(id, { transaction });
+
+      if (!user) {
+        return false;
+      }
+
+      await favorites.destroy({
+        where: { userId: id },
+        transaction,
+      });
+
+      await user.destroy({ transaction });
+
+      return true;
+    });
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.status(204).send();
+  } catch (error) {
+    return next(error);
+  }
+});
+
+module.exports = router;

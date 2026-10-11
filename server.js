@@ -1,13 +1,3 @@
-const express = require('express');
+'use strict';
 
-const app = express();
-
-const PORT = 3001;
-
-app.get('/', (req, res) => {
-  res.send('Backend Server Running!');
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+require('./index');
