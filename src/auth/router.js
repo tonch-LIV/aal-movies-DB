@@ -2,8 +2,9 @@
 
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { users } = require('../models');
-const basic = require('./basic');
+const { db, users, favorites } = require('../models');
+const basic = require('./basic.js');
+const bearer = require('./bearer.js');
 
 const router = express.Router();
 
@@ -25,21 +26,21 @@ function safeUser(user) {
 
 router.post('/signup', async (req, res, next) => {
   try {
-  const { username, password } =
-    req.body && typeof req.body === 'object' && !Array.isArray(req.body)
-      ? req.body
-      : {};
+    const { username, password } =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+        ? req.body
+        : {};
 
-  if (
-    typeof username !== 'string' ||
-    typeof password !== 'string' ||
-    username.trim().length === 0 ||
-    password.trim().length === 0
-  ) {
-    return res.status(400).json({
-      error: 'Valid username and password are required',
-    });
-  }
+    if (
+      typeof username !== 'string' ||
+      typeof password !== 'string' ||
+      username.trim().length === 0 ||
+      password.trim().length === 0
+    ) {
+      return res.status(400).json({
+        error: 'Valid username and password are required',
+      });
+    }
 
     const user = await users.create({
       username,
@@ -71,6 +72,46 @@ router.post('/signin', basic, (req, res) => {
     user: safeUser(req.user),
     token,
   });
+});
+
+router.delete('/users/:id', bearer, async (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+
+  const rawId = req.params.id;
+  const id = Number(rawId);
+
+  if (!/^[1-9]\d*$/.test(rawId) || !Number.isSafeInteger(id)) {
+    return res.status(400).json({ error: 'Valid user ID is required' });
+  }
+
+  try {
+    const deleted = await db.transaction(async (transaction) => {
+      const user = await users.findByPk(id, { transaction });
+
+      if (!user) {
+        return false;
+      }
+
+      await favorites.destroy({
+        where: { userId: id },
+        transaction,
+      });
+
+      await user.destroy({ transaction });
+
+      return true;
+    });
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.status(204).send();
+  } catch (error) {
+    return next(error);
+  }
 });
 
 module.exports = router;

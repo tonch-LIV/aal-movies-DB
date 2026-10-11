@@ -51,9 +51,14 @@ async function bearer(req, res, next) {
     req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({
-      error: 'Invalid token',
-    });
+    if (
+      ['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError']
+        .includes(error.name)
+    ) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    return next(error);
   }
 }
 

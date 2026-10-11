@@ -22,7 +22,7 @@ Users can remove their own favorites; admins can remove any favorite.
 Favoriting an entry does not grant editing/deleting rights or create another movie entry.
 
 Models:
-Users: id, username(unique), password(hash), role(user/admin).
+Users: id, username(unique), password(hash), role(user/admin), deletedAt.
 Movies: id, ownerId, tmdbId, title, overview, releaseDate, posterPath,
         status(planned/watched, default planned), notes.
 Favorites: id, userId, movieId.
@@ -48,8 +48,19 @@ The integration/favorites owner registers all supplied model factories and defin
 ownerId, userId, and movieId are required foreign keys.
 They must reference existing local records.
 Deleting a movie cascades deletion to its associated Favorites.
-Proposed user-deletion policy: RESTRICT while related records exist;
-requires team agreement. No account-deletion endpoint is in scope.
+
+Account deletion:
+Only admins may delete accounts through DELETE /users/:id.
+Deletion is soft deletion: the Users row remains with deletedAt set.
+Deleted users cannot sign in or authenticate with existing tokens.
+Their movie submissions remain, retaining ownerId and displaying the
+former username through an explicitly limited public-user projection.
+Favorites belonging to the deleted user are removed transactionally.
+Other users' favorites on those movies remain.
+Only admins may modify movies whose owner account is deleted.
+Deleted usernames remain reserved.
+Successful deletion returns 204 without a body.
+Public stored-movie GET responses include owner: { id, username }, including the former owner after soft deletion.
 
 Shared exports:
 src/models/index.js exports { db, users, movies, favorites }.
@@ -99,6 +110,7 @@ Admin setup is explicit and never hardcodes committed credentials.
 Routes:
 POST /signup — JSON username/password; 201.
 POST /signin — Basic header; 200.
+DELETE /users/:id — Bearer + explicit admin-only check; soft delete account and remove its favorites transactionally; 204.
 Auth body: { user: { id, username, role }, token }.
 GET /health — public; 200 { status: "ok" }.
 

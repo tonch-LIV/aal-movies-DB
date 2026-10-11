@@ -8,6 +8,7 @@ const { start } = require('./src/server');
 async function boot() {
   try {
     await db.authenticate();
+    await db.sync();
     start();
   } catch (err) {
     console.error('Server startup failed', {

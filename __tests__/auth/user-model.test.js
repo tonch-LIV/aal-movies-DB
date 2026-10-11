@@ -1,11 +1,7 @@
 'use strict';
 
 const bcrypt = require('bcrypt');
-const { DataTypes } = require('sequelize');
-const { db } = require('../../src/models');
-const userModel = require('../../src/auth/user-model');
-
-const User = userModel(db, DataTypes);
+const { db, users: User } = require('../../src/models');
 
 describe('User Model', () => {
 

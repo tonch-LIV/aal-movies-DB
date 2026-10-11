@@ -19,6 +19,8 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'user',
     },
+  }, {
+    paranoid: true,
   });
 
   User.beforeSave(async (user) => {
