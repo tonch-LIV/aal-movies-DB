@@ -67,11 +67,10 @@ flowchart TD
     Public --> Search[TMDB search service]
 ```
 
-Public health bypasses the database.
-Public stored-movie reads use the database.
+Public health bypasses the database.  
+Public stored-movie reads use the database.  
 Basic signin creates the token later verified by Bearer middleware.  
-The diagram describes the planned complete system, including features still pending.
-
+The diagram describes the implemented backend. Account deletion additionally requires an explicit admin-role check.
 ## changelog
 
 ### antonio - integration/deployment, and favorites
@@ -129,6 +128,7 @@ The diagram describes the planned complete system, including features still pend
   - Added the existing-database soft-delete column update; 
 - Verified account deletion, retained records, and rollback behavior; 
   - **`__tests__/integration/account-deletion.test.js`**;
+- Verified PostgreSQL account deletion, revoked access, retained movie ownership, and selective favorite removal; `DELETE /users/:id`, `GET /movies/:id`, `GET /favorites`.
 
 ### amity - movies
 
