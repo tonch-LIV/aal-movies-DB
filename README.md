@@ -5,9 +5,8 @@
 - Commands: `npm test` and `npm start`.
 - Contract: link to [`docs/team-contract.md`](docs/team-contract.md).
 - Status: 261 tests pass across 13 suites. Auth, movies, Favorites, and
-  transactional admin-only soft account deletion are integrated.
-  Final PostgreSQL deletion rehearsal, presentation documentation,
-  and release remain pending; cloud deployment optional.
+  transactional admin-only soft account deletion are implemented.
+  Final PostgreSQL deletion confirmed through curl. The implementation is merged into `main` and `dev`. cloud deployment optional.
 
 ## UML
 
@@ -132,4 +131,34 @@ The diagram describes the implemented backend. Account deletion additionally req
 
 ### amity - movies
 
+- Defined movie metadata, ownership, watch status, notes, and unique owner/TMDB submissions; `src/movies/movie-model.js`.
+- Implemented six movie routes with authentication and capability checks on protected operations; `src/movies/router.js`.
+- Added stored-entry CRUD, validation, duplicate handling, and owner/admin authorization; `src/movies/handlers.js`.
+- Derived ownership from authentication and retrieved metadata from TMDB; `src/movies/handlers.js`.
+- Added normalized TMDB search/details requests with server-only authentication and a five-second timeout; `src/services/tmdb.js`.
+- Tested routes, handlers, model constraints, and provider failures using mocked external requests; `__tests__/movies/`.
+
+Movies uses the shared authentication and database systems. Antonio
+subsequently added limited former-owner display after soft account deletion.
+
 ### luis - users
+
+- Defined user accounts and bcrypt password hashing when passwords change; `src/auth/user-model.js`.
+- Implemented Basic signin with credential and header validation; `src/auth/basic.js`.
+- Verified JWT signatures, expiration, claims, and current database-user lookup; `src/auth/bearer.js`.
+- Defined user/admin capabilities and denied unknown roles; `src/auth/permissions.js`.
+- Implemented regular-user signup, signin, and safe authentication responses; `src/auth/router.js`.
+- Added explicit administrator creation outside public signup; `scripts/create-admin.js`.
+- Tested authentication, hashing, role permissions, and safe responses; `__tests__/auth/`.
+- Reported 261 passing tests across 13 suites on integrated dev commit `68298dc`; `npm test`.
+
+Antonio subsequently implemented transactional admin-only soft account
+deletion, authentication exclusion, and associated integration tests.
+
+## Credits
+
+Movie metadata is provided by [The Movie Database](https://www.themoviedb.org/).
+
+This product uses the TMDB API but is not endorsed or certified by TMDB.
+
+[![TMDB logo](docs/assets/tmdb_blue_long.svg)](https://www.themoviedb.org/)
